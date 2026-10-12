@@ -1,18 +1,35 @@
-FROM python:3.12@sha256:63828510c8b5ccce3bf0d6fabd6f3d17d4effa1ffe690f80a67c8e2d394e03ee
+FROM python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258
 
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    gcc \
-    curl \
-    vim
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-COPY . .
+# Create the dedicated unprivileged user and group
+RUN groupadd --system --gid 10001 app \
+ && useradd  --system --uid 10001 --gid app \
+             --no-create-home --shell /usr/sbin/nologin app
 
-RUN pip install -r app/requirements.txt
+# Install your Python packages
+COPY app/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy app files and change ownership to the 'app' user
+COPY --chown=app:app app/ /app/
+
+# Drop root privileges
+USER app
 
 EXPOSE 8080
 
-# The whole context was copied to /app, so the app package lives in /app/app.
-CMD ["gunicorn", "--chdir", "app", "--bind", "0.0.0.0:8080", "--workers", "2", "app:app"]
+# Adding a /healthz endpoint for app
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD ["python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=2).status == 200 else 1)"]
+
+CMD ["gunicorn", \
+     "--bind", "0.0.0.0:8080", \
+     "--workers", "4", \
+     "--worker-tmp-dir", "/dev/shm", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "app:app"]

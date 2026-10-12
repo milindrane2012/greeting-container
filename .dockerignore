@@ -1,0 +1,43 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Secrets and credentials
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.p12
+*.pfx
+.aws
+
+# Python artifacts
+**/__pycache__
+**/*.py[cod]
+.venv
+venv
+env
+*.egg-info
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+
+# Editors / OS
+.idea
+*.iml
+.vscode
+.DS_Store
+
+# Docker and CI files (not needed inside the image)
+Dockerfile
+.dockerignore
+.gitlab-ci.yml
+
+# Docs, tests, tooling output
+*.md
+tests
+markdownlint-cli2-codequality.json
