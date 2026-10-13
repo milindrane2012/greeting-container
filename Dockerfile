@@ -39,7 +39,7 @@ COPY --from=builder /opt/venv /opt/venv
 # Change the ownership of app folder to app:app
 COPY --chown=app:app app/ /app/
 
-USER app
+USER 10001
 
 EXPOSE 8080
 
